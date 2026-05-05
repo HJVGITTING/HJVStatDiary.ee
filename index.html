@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Daily Diary">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f5f4f0">
+<title>Daily Diary</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; padding: 1rem; }
+  .diary { max-width: 600px; margin: 0 auto; padding-bottom: 5.5rem; }
+
+  .day-banner { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: #fff; border-radius: 12px; margin-bottom: 0.75rem; border: 0.5px solid #dddbd3; }
+  .date-label { font-size: 12px; color: #888780; }
+  .date-val { font-size: 15px; font-weight: 500; }
+  .new-day-btn { font-size: 12px; padding: 4px 10px; border-radius: 8px; border: 0.5px solid #c8c6be; background: transparent; color: #666; cursor: pointer; font-family: inherit; }
+  .new-day-btn:hover { background: #f0efe9; }
+
+  .section { background: #fff; border: 0.5px solid #dddbd3; border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 0.625rem; }
+  .section-title { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: #aaa89f; margin-bottom: 1rem; }
+
+  .field { margin-bottom: 1rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 14px; color: #555; margin-bottom: 6px; }
+  .field input[type=text], .field input[type=number], .field textarea {
+    width: 100%; font-size: 14px; padding: 8px 10px; border: 0.5px solid #dddbd3;
+    border-radius: 8px; background: #fafaf8; color: #1a1a18; outline: none; font-family: inherit;
+  }
+  .field input:focus, .field textarea:focus { border-color: #aaa89f; background: #fff; }
+  .field textarea { resize: vertical; min-height: 76px; }
+
+  /* Pill radio buttons */
+  .pill-group { display: flex; flex-wrap: wrap; gap: 5px; }
+  .pill-group input[type=radio] { display: none; }
+  .pill-group label {
+    display: inline-block; padding: 5px 10px; font-size: 13px; border-radius: 20px;
+    border: 0.5px solid #c8c6be; background: #fafaf8; color: #555;
+    cursor: pointer; transition: all 0.1s; user-select: none;
+  }
+  .pill-group label:hover { background: #f0efe9; border-color: #aaa89f; }
+  .pill-group input[type=radio]:checked + label { background: #EAF3DE; border-color: #639922; color: #2f5a10; font-weight: 500; }
+  .pill-ends { display: flex; justify-content: space-between; margin-top: 4px; }
+  .pill-ends span { font-size: 11px; color: #aaa89f; }
+
+  /* Yes/No toggles */
+  .toggle-row { display: flex; gap: 8px; }
+  .tog { flex: 1; padding: 8px; text-align: center; font-size: 14px; border-radius: 8px; border: 0.5px solid #c8c6be; cursor: pointer; background: transparent; color: #666; transition: all 0.12s; font-family: inherit; }
+  .tog.active-yes { background: #EAF3DE; border-color: #639922; color: #3B6D11; }
+  .tog.active-no  { background: #f0efe9; border-color: #c8c6be; color: #555; font-weight: 500; }
+
+  /* Sub-fields */
+  .sub-fields { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 0.5px solid #ebebE5; display: none; }
+  .sub-fields.visible { display: block; }
+
+  /* Three words */
+  .three-words { display: flex; gap: 8px; }
+  .three-words input { flex: 1; min-width: 0; }
+
+  /* Food log */
+  .food-log { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+  .food-entry { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #fafaf8; border-radius: 8px; border: 0.5px solid #e8e6de; }
+  .food-entry-text { flex: 1; font-size: 14px; }
+  .food-entry-time { font-size: 11px; color: #aaa89f; white-space: nowrap; }
+  .food-entry-del { background: none; border: none; cursor: pointer; color: #bbb; font-size: 18px; line-height: 1; padding: 0 2px; }
+  .food-entry-del:hover { color: #555; }
+  .food-add-row { display: flex; gap: 8px; }
+  .food-add-row input { flex: 1; font-size: 14px; padding: 8px 10px; border: 0.5px solid #dddbd3; border-radius: 8px; background: #fafaf8; color: #1a1a18; outline: none; font-family: inherit; }
+  .food-add-row input:focus { border-color: #aaa89f; background: #fff; }
+  .food-add-btn { padding: 0 14px; font-size: 14px; border-radius: 8px; border: 0.5px solid #c8c6be; background: transparent; color: #333; cursor: pointer; font-family: inherit; }
+  .food-add-btn:hover { background: #f0efe9; }
+  .food-empty { font-size: 13px; color: #bbb; padding: 2px 0 6px; }
+
+  /* Yesterday goal banner */
+  .goal-banner { background: #fafaf8; border-radius: 10px; border: 0.5px solid #e8e6de; padding: 0.75rem 1rem; margin-bottom: 0.75rem; }
+  .goal-banner-label { font-size: 11px; color: #aaa89f; margin-bottom: 3px; }
+  .goal-banner-text { font-size: 14px; color: #1a1a18; font-style: italic; }
+
+  /* Carried over tag */
+  .carried-tag { display: inline-block; font-size: 11px; background: #FEF3CD; border: 0.5px solid #c9a227; color: #7a5f10; border-radius: 20px; padding: 2px 8px; margin-top: 5px; }
+
+  /* Save bar */
+  .save-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 0.75rem 1rem; background: rgba(245,244,240,0.93); backdrop-filter: blur(8px); border-top: 0.5px solid #dddbd3; }
+  .save-bar-inner { width: 100%; max-width: 600px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  .save-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 10px; border: 0.5px solid #c8c6be; background: #fff; cursor: pointer; color: #1a1a18; font-family: inherit; }
+  .save-btn:hover { background: #f0efe9; }
+  .save-btn:active { transform: scale(0.98); }
+  .save-status { font-size: 12px; color: #aaa89f; white-space: nowrap; }
+
+  /* Modals */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+  .modal { background: #fff; border-radius: 14px; border: 0.5px solid #dddbd3; padding: 1.5rem; max-width: 340px; width: 100%; }
+  .modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 0.4rem; }
+  .modal p { font-size: 13px; color: #666; margin-bottom: 1.25rem; line-height: 1.6; }
+  .modal-btns { display: flex; gap: 8px; }
+  .modal-btns button { flex: 1; padding: 9px; font-size: 14px; border-radius: 8px; cursor: pointer; border: 0.5px solid #c8c6be; background: transparent; color: #1a1a18; font-family: inherit; }
+  .modal-btns button:hover { background: #f0efe9; }
+  .modal-btns .btn-primary { font-weight: 500; }
+  .sheet-modal { background: #fff; border-radius: 14px; border: 0.5px solid #dddbd3; padding: 1.5rem; max-width: 400px; width: 100%; }
+  .sheet-modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 0.4rem; }
+  .sheet-modal p { font-size: 13px; color: #666; margin-bottom: 1rem; line-height: 1.6; }
+  .sheet-modal input { width: 100%; font-size: 13px; padding: 8px 10px; border: 0.5px solid #dddbd3; border-radius: 8px; background: #fafaf8; outline: none; font-family: inherit; margin-bottom: 1rem; }
+  .sheet-modal-btns { display: flex; gap: 8px; }
+  .sheet-modal-btns button { flex: 1; padding: 9px; font-size: 14px; border-radius: 8px; cursor: pointer; border: 0.5px solid #c8c6be; background: transparent; color: #1a1a18; font-family: inherit; }
+  .sheet-modal-btns button:hover { background: #f0efe9; }
+  .sheet-modal-btns .btn-primary { font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="diary">
+
+  <!-- Date banner -->
+  <div class="day-banner">
+    <div>
+      <div class="date-label">Today</div>
+      <div class="date-val" id="date-display">—</div>
+    </div>
+    <button class="new-day-btn" onclick="promptNewDay()">New day</button>
+  </div>
+
+  <!-- Yesterday's goal -->
+  <div id="yday-goal-section" style="display:none;">
+    <div class="section">
+      <div class="section-title">Yesterday's goal</div>
+      <div class="goal-banner">
+        <div class="goal-banner-label">You wanted to</div>
+        <div class="goal-banner-text" id="yday-goal-text">—</div>
+      </div>
+      <div class="field">
+        <label>Did you do it?</label>
+        <div class="toggle-row">
+          <button class="tog" id="goal-done-yes" onclick="setToggle('goal-done', true)">Yes</button>
+          <button class="tog" id="goal-done-no"  onclick="setToggle('goal-done', false)">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wellbeing -->
+  <div class="section">
+    <div class="section-title">Wellbeing</div>
+    <div class="field">
+      <label>Mood</label>
+      <div class="pill-group" id="pills-mood"></div>
+      <div class="pill-ends"><span>low</span><span>high</span></div>
+    </div>
+    <div class="field">
+      <label>Energy</label>
+      <div class="pill-group" id="pills-energy"></div>
+      <div class="pill-ends"><span>low</span><span>high</span></div>
+    </div>
+    <div class="field">
+      <label>Overall wellbeing</label>
+      <div class="pill-group" id="pills-wellbeing"></div>
+      <div class="pill-ends"><span>low</span><span>high</span></div>
+    </div>
+  </div>
+
+  <!-- Sleep -->
+  <div class="section">
+    <div class="section-title">Sleep</div>
+    <div class="field">
+      <label>Hours slept</label>
+      <input type="number" id="sleep-hours" min="0" max="24" step="0.5" placeholder="e.g. 7.5">
+    </div>
+  </div>
+
+  <!-- Exercise -->
+  <div class="section">
+    <div class="section-title">Exercise</div>
+    <div class="field">
+      <label>Did you exercise today?</label>
+      <div class="toggle-row">
+        <button class="tog" id="exercise-yes" onclick="setToggle('exercise', true)">Yes</button>
+        <button class="tog" id="exercise-no"  onclick="setToggle('exercise', false)">No</button>
+      </div>
+      <div class="sub-fields" id="exercise-detail">
+        <div class="field">
+          <label>Type of exercise</label>
+          <input type="text" id="ex-type" placeholder="e.g. running, gym, cycling">
+        </div>
+        <div class="field">
+          <label>Duration (minutes)</label>
+          <input type="number" id="ex-duration" min="0" placeholder="e.g. 45">
+        </div>
+        <div class="field">
+          <label>How did it feel?</label>
+          <div class="pill-group" id="pills-ex-feel"></div>
+          <div class="pill-ends"><span>rough</span><span>great</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vitamins -->
+  <div class="section">
+    <div class="section-title">Vitamins</div>
+    <div class="field">
+      <label>Did you take your vitamins?</label>
+      <div class="toggle-row">
+        <button class="tog" id="vitamins-yes" onclick="setToggle('vitamins', true)">Yes</button>
+        <button class="tog" id="vitamins-no"  onclick="setToggle('vitamins', false)">No</button>
+      </div>
+      <div class="sub-fields" id="vitamins-detail">
+        <div class="field">
+          <label>Which vitamins?</label>
+          <input type="text" id="vit-which" placeholder="e.g. D3, magnesium, omega-3">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Food log -->
+  <div class="section">
+    <div class="section-title">Food log</div>
+    <div class="food-log" id="food-log"><div class="food-empty">Nothing logged yet.</div></div>
+    <div class="food-add-row">
+      <input type="text" id="food-input" placeholder="Add what you ate or drank..." onkeydown="if(event.key==='Enter')addFood()">
+      <button class="food-add-btn" onclick="addFood()">Add</button>
+    </div>
+  </div>
+
+  <!-- Alcohol -->
+  <div class="section">
+    <div class="section-title">Alcohol</div>
+    <div class="field">
+      <label>Did you drink today?</label>
+      <div class="toggle-row">
+        <button class="tog" id="alcohol-yes" onclick="setToggle('alcohol', true)">Yes</button>
+        <button class="tog" id="alcohol-no"  onclick="setToggle('alcohol', false)">No</button>
+      </div>
+      <div class="sub-fields" id="alcohol-detail">
+        <div class="field">
+          <label>How many units?</label>
+          <input type="number" id="alc-units" min="0" step="0.5" placeholder="e.g. 2">
+        </div>
+        <div class="field">
+          <label>Alone or social?</label>
+          <div class="toggle-row">
+            <button class="tog" id="alc-btn-alone"  onclick="setAlcSocial('alone')">Alone</button>
+            <button class="tog" id="alc-btn-social" onclick="setAlcSocial('social')">Social</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Work & habits -->
+  <div class="section">
+    <div class="section-title">Work &amp; habits</div>
+    <div class="field">
+      <label>Did you complete your key tasks today?</label>
+      <div class="toggle-row">
+        <button class="tog" id="tasks-yes" onclick="setToggle('tasks', true)">Yes</button>
+        <button class="tog" id="tasks-no"  onclick="setToggle('tasks', false)">No</button>
+      </div>
+      <div class="sub-fields" id="tasks-detail">
+        <div class="field">
+          <label>What did you complete?</label>
+          <textarea id="tasks-done" placeholder="Brief notes on what got done..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Productivity</label>
+      <div class="pill-group" id="pills-productivity"></div>
+      <div class="pill-ends"><span>low</span><span>high</span></div>
+    </div>
+    <div class="field">
+      <label>Stress level</label>
+      <div class="pill-group" id="pills-stress"></div>
+      <div class="pill-ends"><span>calm</span><span>stressed</span></div>
+    </div>
+  </div>
+
+  <!-- Reflection -->
+  <div class="section">
+    <div class="section-title">Reflection</div>
+    <div class="field">
+      <label>Describe today in three words</label>
+      <div class="three-words">
+        <input type="text" id="word1" placeholder="Word 1">
+        <input type="text" id="word2" placeholder="Word 2">
+        <input type="text" id="word3" placeholder="Word 3">
+      </div>
+    </div>
+    <div class="field">
+      <label>Thought of the day</label>
+      <textarea id="day-notes" placeholder="A thought, reflection, or feeling from today..."></textarea>
+    </div>
+    <div class="field">
+      <label>Something unique about this day</label>
+      <textarea id="day-unique" placeholder="What made today different or memorable?"></textarea>
+    </div>
+  </div>
+
+  <!-- Tomorrow's goal -->
+  <div class="section">
+    <div class="section-title">Tomorrow's goal</div>
+    <div class="field">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <label style="margin:0;">What do you want to do tomorrow?</label>
+        <span class="carried-tag" id="carried-tag" style="display:none;">Carried over</span>
+      </div>
+      <input type="text" id="next-goal" placeholder="e.g. Go for a morning run">
+    </div>
+  </div>
+
+</div>
+
+<!-- Save bar -->
+<div class="save-bar">
+  <div class="save-bar-inner">
+    <button class="save-btn" onclick="saveEntry()">Save to sheet</button>
+    <span class="save-status" id="save-status"></span>
+  </div>
+</div>
+
+<!-- New day modal -->
+<div class="overlay" id="new-day-modal" style="display:none;">
+  <div class="modal">
+    <h2>Starting a new day?</h2>
+    <p>This will clear today's entries and start fresh. Make sure you've saved first.</p>
+    <div class="modal-btns">
+      <button onclick="closeModal('new-day-modal')">Keep editing</button>
+      <button class="btn-primary" onclick="confirmNewDay()">Start new day</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet URL modal -->
+<div class="overlay" id="sheet-modal" style="display:none;">
+  <div class="sheet-modal">
+    <h2>Connect Google Sheet</h2>
+    <p>Paste your Google Apps Script web app URL below to enable saving.</p>
+    <input type="text" id="sheet-url" placeholder="https://script.google.com/macros/s/...">
+    <div class="sheet-modal-btns">
+      <button onclick="closeModal('sheet-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveSheetUrl()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Resume / new day modal -->
+<div class="overlay" id="open-modal" style="display:none;">
+  <div class="modal">
+    <h2>Welcome back</h2>
+    <p id="open-modal-msg">You have an entry from today. Continue editing, or start a new day?</p>
+    <div class="modal-btns">
+      <button onclick="closeModal('open-modal')">Continue today</button>
+      <button class="btn-primary" onclick="confirmNewDay()">New day</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATE_KEY = 'diary_state';
+const SHEET_KEY = 'diary_sheet_url';
+const GOAL_KEY  = 'diary_next_goal';
+const GOAL_DONE_KEY = 'diary_goal_done';
+const toggles   = {};
+let foodEntries = [];
+let alcSocial   = '';
+
+const PILL_NAMES = ['mood','energy','wellbeing','ex-feel','productivity','stress'];
+
+// ── PWA: keep page alive & auto-save on hide ──────────────────
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') silentSave();
+});
+window.addEventListener('pagehide', silentSave);
+window.addEventListener('beforeunload', silentSave);
+
+function silentSave() {
+  const data = getFormData();
+  localStorage.setItem(STATE_KEY, JSON.stringify({
+    date: new Date().toDateString(), ...data, foodEntries, alcSocial
+  }));
+}
+
+// ── Pills ─────────────────────────────────────────────────────
+function buildPills() {
+  PILL_NAMES.forEach(name => {
+    const el = document.getElementById('pills-' + name);
+    if (!el) return;
+    let html = '';
+    for (let i = 1; i <= 10; i++) {
+      html += `<input type="radio" name="${name}" id="${name}-${i}" value="${i}">
+               <label for="${name}-${i}">${i}</label>`;
+    }
+    el.innerHTML = html;
+  });
+}
+function getPill(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : '';
+}
+function setPill(name, val) {
+  const el = document.getElementById(name + '-' + val);
+  if (el) el.checked = true;
+}
+
+// ── Toggles ───────────────────────────────────────────────────
+function setToggle(name, val) {
+  toggles[name] = val;
+  const yes = document.getElementById(name + '-yes');
+  const no  = document.getElementById(name + '-no');
+  if (yes) yes.className = 'tog' + (val ? ' active-yes' : '');
+  if (no)  no.className  = 'tog' + (!val ? ' active-no' : '');
+  const det = document.getElementById(name + '-detail');
+  if (det) det.className = 'sub-fields' + (val ? ' visible' : '');
+}
+function setAlcSocial(val) {
+  alcSocial = val;
+  document.getElementById('alc-btn-alone').className  = 'tog' + (val === 'alone'  ? ' active-yes' : '');
+  document.getElementById('alc-btn-social').className = 'tog' + (val === 'social' ? ' active-yes' : '');
+}
+
+// ── Food log ──────────────────────────────────────────────────
+function addFood() {
+  const input = document.getElementById('food-input');
+  const val = input.value.trim();
+  if (!val) return;
+  const time = new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  foodEntries.push({ text: val, time });
+  input.value = '';
+  renderFoodLog();
+}
+function removeFood(idx) {
+  foodEntries.splice(idx, 1);
+  renderFoodLog();
+}
+function renderFoodLog() {
+  const log = document.getElementById('food-log');
+  if (!foodEntries.length) { log.innerHTML = '<div class="food-empty">Nothing logged yet.</div>'; return; }
+  log.innerHTML = foodEntries.map((e, i) =>
+    `<div class="food-entry">
+      <span class="food-entry-text">${e.text}</span>
+      <span class="food-entry-time">${e.time}</span>
+      <button class="food-entry-del" onclick="removeFood(${i})">×</button>
+    </div>`
+  ).join('');
+}
+
+// ── Yesterday's goal ──────────────────────────────────────────
+function loadYesterdayGoal() {
+  const goal = localStorage.getItem(GOAL_KEY);
+  if (goal) {
+    document.getElementById('yday-goal-section').style.display = 'block';
+    document.getElementById('yday-goal-text').textContent = '"' + goal + '"';
+  } else {
+    document.getElementById('yday-goal-section').style.display = 'none';
+  }
+}
+
+// ── New day logic ─────────────────────────────────────────────
+function fmt(d) {
+  return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+function promptNewDay() { document.getElementById('new-day-modal').style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function confirmNewDay() {
+  closeModal('new-day-modal'); closeModal('open-modal');
+
+  const nextGoal   = document.getElementById('next-goal').value.trim();
+  const goalDone   = toggles['goal-done']; // true = yes, false = no, undefined = unanswered
+
+  // Carry forward if goal was NOT done (false) or unanswered (undefined/null)
+  // and there was a goal set
+  const prevGoal = localStorage.getItem(GOAL_KEY);
+  const shouldCarry = prevGoal && goalDone !== true;
+
+  // What becomes tomorrow's goal on new day:
+  // Priority: what user typed in next-goal field, else carry over unfinished goal
+  const goalToCarry = nextGoal || (shouldCarry ? prevGoal : '');
+
+  if (goalToCarry) {
+    localStorage.setItem(GOAL_KEY, goalToCarry);
+    // Mark whether it was carried (no next-goal typed, just rolling over)
+    localStorage.setItem(GOAL_DONE_KEY, shouldCarry && !nextGoal ? 'carried' : 'new');
+  } else {
+    localStorage.removeItem(GOAL_KEY);
+    localStorage.removeItem(GOAL_DONE_KEY);
+  }
+
+  resetForm();
+  localStorage.setItem(STATE_KEY, JSON.stringify({ date: new Date().toDateString() }));
+  document.getElementById('date-display').textContent = fmt(new Date());
+  loadYesterdayGoal();
+  updateCarriedTag();
+}
+
+function updateCarriedTag() {
+  // Show "Carried over" tag on tomorrow's goal if the stored goal was carried
+  const tag    = document.getElementById('carried-tag');
+  const status = localStorage.getItem(GOAL_DONE_KEY);
+  const goal   = localStorage.getItem(GOAL_KEY);
+  // We show the tag in next-goal field only when a carried goal is pre-filled
+  // but only right after a new day starts — once user edits it, tag stays for context
+  if (goal && status === 'carried') {
+    tag.style.display = 'inline-block';
+  } else {
+    tag.style.display = 'none';
+  }
+}
+
+function preloadCarriedGoal() {
+  // On a fresh day start, if a goal was carried, pre-fill tomorrow's goal field
+  // Actually we don't pre-fill next-goal — the carried goal shows in "yesterday's goal"
+  // The tag shows on the next-goal section so user knows to re-enter if they want
+  updateCarriedTag();
+}
+
+// ── Reset ─────────────────────────────────────────────────────
+function resetForm() {
+  PILL_NAMES.forEach(name => {
+    const checked = document.querySelector(`input[name="${name}"]:checked`);
+    if (checked) checked.checked = false;
+  });
+  ['sleep-hours','ex-type','ex-duration','vit-which','alc-units','tasks-done',
+   'word1','word2','word3','day-notes','day-unique','next-goal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  foodEntries = []; renderFoodLog();
+  alcSocial = '';
+  ['exercise','vitamins','alcohol','tasks','goal-done'].forEach(name => {
+    toggles[name] = undefined;
+    const yes = document.getElementById(name + '-yes');
+    const no  = document.getElementById(name + '-no');
+    if (yes) yes.className = 'tog';
+    if (no)  no.className  = 'tog';
+    const det = document.getElementById(name + '-detail');
+    if (det) det.className = 'sub-fields';
+  });
+  document.getElementById('alc-btn-alone').className  = 'tog';
+  document.getElementById('alc-btn-social').className = 'tog';
+  document.getElementById('save-status').textContent  = '';
+}
+
+// ── Collect data ──────────────────────────────────────────────
+function getFormData() {
+  return {
+    date:             new Date().toLocaleDateString('en-GB'),
+    mood:             getPill('mood'),
+    energy:           getPill('energy'),
+    wellbeing:        getPill('wellbeing'),
+    sleep_hours:      document.getElementById('sleep-hours').value,
+    exercise:         toggles['exercise'] === true ? 'yes' : toggles['exercise'] === false ? 'no' : '',
+    ex_type:          document.getElementById('ex-type').value,
+    ex_duration:      document.getElementById('ex-duration').value,
+    ex_feel:          getPill('ex-feel'),
+    vitamins:         toggles['vitamins'] === true ? 'yes' : toggles['vitamins'] === false ? 'no' : '',
+    vit_which:        document.getElementById('vit-which').value,
+    food_log:         foodEntries.map(e => e.time + ' ' + e.text).join(' | '),
+    alcohol:          toggles['alcohol'] === true ? 'yes' : toggles['alcohol'] === false ? 'no' : '',
+    alc_units:        document.getElementById('alc-units').value,
+    alc_social:       alcSocial,
+    tasks_completed:  toggles['tasks'] === true ? 'yes' : toggles['tasks'] === false ? 'no' : '',
+    tasks_notes:      document.getElementById('tasks-done').value,
+    productivity:     getPill('productivity'),
+    stress:           getPill('stress'),
+    word1:            document.getElementById('word1').value,
+    word2:            document.getElementById('word2').value,
+    word3:            document.getElementById('word3').value,
+    thought_of_day:   document.getElementById('day-notes').value,
+    unique_about_day: document.getElementById('day-unique').value,
+    yday_goal:        (localStorage.getItem(GOAL_KEY) || ''),
+    yday_goal_done:   toggles['goal-done'] === true ? 'yes' : toggles['goal-done'] === false ? 'no' : '',
+    next_goal:        document.getElementById('next-goal').value
+  };
+}
+
+// ── Save to sheet ─────────────────────────────────────────────
+async function saveEntry() {
+  const url = localStorage.getItem(SHEET_KEY);
+  if (!url) { document.getElementById('sheet-modal').style.display = 'flex'; return; }
+  const status = document.getElementById('save-status');
+  status.textContent = 'Saving...';
+  const data = getFormData();
+  localStorage.setItem(STATE_KEY, JSON.stringify({
+    date: new Date().toDateString(), ...data, foodEntries, alcSocial
+  }));
+  try {
+    await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    status.textContent = 'Saved ' + new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  } catch(e) {
+    status.textContent = 'Saved locally (sheet unreachable)';
+  }
+}
+function saveSheetUrl() {
+  const val = document.getElementById('sheet-url').value.trim();
+  if (val) { localStorage.setItem(SHEET_KEY, val); closeModal('sheet-modal'); saveEntry(); }
+}
+
+// ── Restore state ─────────────────────────────────────────────
+function restoreState(s) {
+  PILL_NAMES.forEach(name => { if (s[name]) setPill(name, s[name]); });
+  const fieldMap = {
+    'sleep-hours': s.sleep_hours, 'ex-type': s.ex_type, 'ex-duration': s.ex_duration,
+    'vit-which': s.vit_which, 'alc-units': s.alc_units, 'tasks-done': s.tasks_notes,
+    'word1': s.word1, 'word2': s.word2, 'word3': s.word3,
+    'day-notes': s.thought_of_day, 'day-unique': s.unique_about_day, 'next-goal': s.next_goal
+  };
+  Object.entries(fieldMap).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el && val) el.value = val;
+  });
+  if (s.foodEntries) { foodEntries = s.foodEntries; renderFoodLog(); }
+  if (s.alcSocial)   setAlcSocial(s.alcSocial);
+  ['exercise','vitamins','alcohol','tasks','goal-done'].forEach(name => {
+    const key = name.replace('-','_');
+    const val = s[key] || s[name];
+    if (val === 'yes') setToggle(name, true);
+    else if (val === 'no') setToggle(name, false);
+  });
+  if (s.tasks_notes) document.getElementById('tasks-done').value = s.tasks_notes;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+function init() {
+  buildPills();
+  renderFoodLog();
+  document.getElementById('date-display').textContent = fmt(new Date());
+  loadYesterdayGoal();
+  preloadCarriedGoal();
+
+  const saved = localStorage.getItem(STATE_KEY);
+  if (!saved) return;
+  try {
+    const s = JSON.parse(saved);
+    const now = new Date();
+    if (s.date && s.date !== now.toDateString()) {
+      document.getElementById('open-modal-msg').textContent =
+        'You have an entry from a previous day. Start fresh for today, or keep editing the old one?';
+      restoreState(s);
+      document.getElementById('open-modal').style.display = 'flex';
+    } else if (s.date === now.toDateString() && Object.keys(s).length > 1) {
+      restoreState(s);
+      document.getElementById('open-modal').style.display = 'flex';
+    }
+  } catch(e) {}
+}
+init();
+</script>
+</body>
+</html>
