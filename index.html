@@ -12,13 +12,70 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: system-ui, sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; padding: 1rem; }
+
+  /* ── Lock screen ─────────────────────────────────────────── */
+  #lock-screen {
+    position: fixed; inset: 0; background: #f5f4f0;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; padding: 1rem;
+  }
+  .lock-box {
+    background: #fff; border: 0.5px solid #dddbd3; border-radius: 16px;
+    padding: 2rem 1.5rem; max-width: 320px; width: 100%; text-align: center;
+  }
+  .lock-icon { font-size: 32px; margin-bottom: 1rem; }
+  .lock-box h1 { font-size: 18px; font-weight: 500; margin-bottom: 0.25rem; }
+  .lock-box p  { font-size: 13px; color: #888780; margin-bottom: 1.5rem; }
+  .lock-input-wrap { position: relative; margin-bottom: 0.75rem; }
+  .lock-input-wrap input {
+    width: 100%; font-size: 16px; padding: 10px 40px 10px 12px;
+    border: 0.5px solid #dddbd3; border-radius: 10px;
+    background: #fafaf8; color: #1a1a18; outline: none; font-family: inherit;
+    letter-spacing: 0.1em; text-align: center;
+  }
+  .lock-input-wrap input:focus { border-color: #aaa89f; background: #fff; }
+  .lock-input-wrap input.shake {
+    animation: shake 0.35s ease;
+    border-color: #d44; background: #fff5f5;
+  }
+  .toggle-pw {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: #aaa89f; font-size: 16px; padding: 0;
+  }
+  .lock-error { font-size: 13px; color: #c0392b; min-height: 18px; margin-bottom: 0.75rem; }
+  .lock-btn {
+    width: 100%; padding: 11px; font-size: 15px; font-weight: 500;
+    border-radius: 10px; border: 0.5px solid #c8c6be;
+    background: #1a1a18; color: #fff; cursor: pointer; font-family: inherit;
+    transition: opacity 0.1s;
+  }
+  .lock-btn:hover { opacity: 0.85; }
+  .lock-btn:active { transform: scale(0.98); }
+  .lock-hint { font-size: 11px; color: #bbb; margin-top: 1rem; }
+
+  /* First-time set password UI */
+  .set-pw-note { font-size: 13px; color: #639922; background: #EAF3DE; border-radius: 8px; padding: 8px 12px; margin-bottom: 1rem; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-6px); }
+    40%      { transform: translateX(6px); }
+    60%      { transform: translateX(-4px); }
+    80%      { transform: translateX(4px); }
+  }
+
+  /* ── Diary (hidden until unlocked) ──────────────────────── */
+  #diary-wrap { display: none; }
   .diary { max-width: 600px; margin: 0 auto; padding-bottom: 5.5rem; }
 
   .day-banner { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: #fff; border-radius: 12px; margin-bottom: 0.75rem; border: 0.5px solid #dddbd3; }
   .date-label { font-size: 12px; color: #888780; }
   .date-val { font-size: 15px; font-weight: 500; }
+  .banner-right { display: flex; gap: 8px; align-items: center; }
   .new-day-btn { font-size: 12px; padding: 4px 10px; border-radius: 8px; border: 0.5px solid #c8c6be; background: transparent; color: #666; cursor: pointer; font-family: inherit; }
   .new-day-btn:hover { background: #f0efe9; }
+  .lock-again-btn { font-size: 12px; padding: 4px 10px; border-radius: 8px; border: 0.5px solid #c8c6be; background: transparent; color: #aaa89f; cursor: pointer; font-family: inherit; }
+  .lock-again-btn:hover { background: #f0efe9; }
 
   .section { background: #fff; border: 0.5px solid #dddbd3; border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 0.625rem; }
   .section-title { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: #aaa89f; margin-bottom: 1rem; }
@@ -33,7 +90,6 @@
   .field input:focus, .field textarea:focus { border-color: #aaa89f; background: #fff; }
   .field textarea { resize: vertical; min-height: 76px; }
 
-  /* Pill radio buttons */
   .pill-group { display: flex; flex-wrap: wrap; gap: 5px; }
   .pill-group input[type=radio] { display: none; }
   .pill-group label {
@@ -46,21 +102,17 @@
   .pill-ends { display: flex; justify-content: space-between; margin-top: 4px; }
   .pill-ends span { font-size: 11px; color: #aaa89f; }
 
-  /* Yes/No toggles */
   .toggle-row { display: flex; gap: 8px; }
   .tog { flex: 1; padding: 8px; text-align: center; font-size: 14px; border-radius: 8px; border: 0.5px solid #c8c6be; cursor: pointer; background: transparent; color: #666; transition: all 0.12s; font-family: inherit; }
   .tog.active-yes { background: #EAF3DE; border-color: #639922; color: #3B6D11; }
   .tog.active-no  { background: #f0efe9; border-color: #c8c6be; color: #555; font-weight: 500; }
 
-  /* Sub-fields */
   .sub-fields { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 0.5px solid #ebebE5; display: none; }
   .sub-fields.visible { display: block; }
 
-  /* Three words */
   .three-words { display: flex; gap: 8px; }
   .three-words input { flex: 1; min-width: 0; }
 
-  /* Food log */
   .food-log { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
   .food-entry { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #fafaf8; border-radius: 8px; border: 0.5px solid #e8e6de; }
   .food-entry-text { flex: 1; font-size: 14px; }
@@ -74,15 +126,11 @@
   .food-add-btn:hover { background: #f0efe9; }
   .food-empty { font-size: 13px; color: #bbb; padding: 2px 0 6px; }
 
-  /* Yesterday goal banner */
   .goal-banner { background: #fafaf8; border-radius: 10px; border: 0.5px solid #e8e6de; padding: 0.75rem 1rem; margin-bottom: 0.75rem; }
   .goal-banner-label { font-size: 11px; color: #aaa89f; margin-bottom: 3px; }
   .goal-banner-text { font-size: 14px; color: #1a1a18; font-style: italic; }
-
-  /* Carried over tag */
   .carried-tag { display: inline-block; font-size: 11px; background: #FEF3CD; border: 0.5px solid #c9a227; color: #7a5f10; border-radius: 20px; padding: 2px 8px; margin-top: 5px; }
 
-  /* Save bar */
   .save-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 0.75rem 1rem; background: rgba(245,244,240,0.93); backdrop-filter: blur(8px); border-top: 0.5px solid #dddbd3; }
   .save-bar-inner { width: 100%; max-width: 600px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
   .save-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 10px; border: 0.5px solid #c8c6be; background: #fff; cursor: pointer; color: #1a1a18; font-family: inherit; }
@@ -90,7 +138,6 @@
   .save-btn:active { transform: scale(0.98); }
   .save-status { font-size: 12px; color: #aaa89f; white-space: nowrap; }
 
-  /* Modals */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
   .modal { background: #fff; border-radius: 14px; border: 0.5px solid #dddbd3; padding: 1.5rem; max-width: 340px; width: 100%; }
   .modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 0.4rem; }
@@ -107,18 +154,62 @@
   .sheet-modal-btns button { flex: 1; padding: 9px; font-size: 14px; border-radius: 8px; cursor: pointer; border: 0.5px solid #c8c6be; background: transparent; color: #1a1a18; font-family: inherit; }
   .sheet-modal-btns button:hover { background: #f0efe9; }
   .sheet-modal-btns .btn-primary { font-weight: 500; }
+
+  /* Change password modal */
+  .change-pw-link { font-size: 12px; color: #aaa89f; text-decoration: underline; cursor: pointer; margin-top: 0.75rem; display: inline-block; }
+  .change-pw-link:hover { color: #555; }
 </style>
 </head>
 <body>
+
+<!-- ── Lock screen ──────────────────────────────────────────── -->
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="lock-icon">🔒</div>
+    <h1>Daily Diary</h1>
+    <p id="lock-subtitle">Enter your password to continue</p>
+
+    <!-- First-time setup note (shown only if no password set yet) -->
+    <div class="set-pw-note" id="first-time-note" style="display:none;">
+      First time here — set a password to protect your diary.
+    </div>
+
+    <div class="lock-input-wrap">
+      <input type="password" id="pw-input" placeholder="Password"
+        onkeydown="if(event.key==='Enter')tryUnlock()"
+        autocomplete="current-password">
+      <button class="toggle-pw" onclick="togglePwVisibility()" tabindex="-1">👁</button>
+    </div>
+
+    <!-- Confirm field shown only on first-time setup or change password -->
+    <div id="confirm-wrap" style="display:none;">
+      <div class="lock-input-wrap" style="margin-bottom:0.75rem;">
+        <input type="password" id="pw-confirm" placeholder="Confirm password"
+          onkeydown="if(event.key==='Enter')tryUnlock()"
+          autocomplete="new-password">
+      </div>
+    </div>
+
+    <div class="lock-error" id="lock-error"></div>
+    <button class="lock-btn" id="lock-btn" onclick="tryUnlock()">Unlock</button>
+    <div class="lock-hint" id="lock-hint"></div>
+    <span class="change-pw-link" id="change-pw-link" onclick="showChangePw()" style="display:none;">Change password</span>
+  </div>
+</div>
+
+<!-- ── Diary ────────────────────────────────────────────────── -->
+<div id="diary-wrap">
 <div class="diary">
 
-  <!-- Date banner -->
   <div class="day-banner">
     <div>
       <div class="date-label">Today</div>
       <div class="date-val" id="date-display">—</div>
     </div>
-    <button class="new-day-btn" onclick="promptNewDay()">New day</button>
+    <div class="banner-right">
+      <button class="lock-again-btn" onclick="lockDiary()">🔒</button>
+      <button class="new-day-btn" onclick="promptNewDay()">New day</button>
+    </div>
   </div>
 
   <!-- Yesterday's goal -->
@@ -309,7 +400,7 @@
     </div>
   </div>
 
-</div>
+</div><!-- .diary -->
 
 <!-- Save bar -->
 <div class="save-bar">
@@ -318,6 +409,7 @@
     <span class="save-status" id="save-status"></span>
   </div>
 </div>
+</div><!-- #diary-wrap -->
 
 <!-- New day modal -->
 <div class="overlay" id="new-day-modal" style="display:none;">
@@ -356,23 +448,156 @@
   </div>
 </div>
 
+<!-- Change password modal -->
+<div class="overlay" id="change-pw-modal" style="display:none;">
+  <div class="modal">
+    <h2>Change password</h2>
+    <p>Enter your current password, then choose a new one.</p>
+    <input type="password" id="cp-current" placeholder="Current password" style="width:100%;font-size:14px;padding:8px 10px;border:0.5px solid #dddbd3;border-radius:8px;background:#fafaf8;outline:none;font-family:inherit;margin-bottom:8px;">
+    <input type="password" id="cp-new" placeholder="New password" style="width:100%;font-size:14px;padding:8px 10px;border:0.5px solid #dddbd3;border-radius:8px;background:#fafaf8;outline:none;font-family:inherit;margin-bottom:8px;">
+    <input type="password" id="cp-confirm" placeholder="Confirm new password" style="width:100%;font-size:14px;padding:8px 10px;border:0.5px solid #dddbd3;border-radius:8px;background:#fafaf8;outline:none;font-family:inherit;margin-bottom:8px;">
+    <div class="lock-error" id="cp-error"></div>
+    <div class="modal-btns">
+      <button onclick="closeModal('change-pw-modal')">Cancel</button>
+      <button class="btn-primary" onclick="doChangePassword()">Update</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const STATE_KEY = 'diary_state';
-const SHEET_KEY = 'diary_sheet_url';
-const GOAL_KEY  = 'diary_next_goal';
+// ── Password (stored as simple hash) ─────────────────────────
+const PW_KEY        = 'diary_pw_hash';
+const STATE_KEY     = 'diary_state';
+const SHEET_KEY     = 'diary_sheet_url';
+const GOAL_KEY      = 'diary_next_goal';
 const GOAL_DONE_KEY = 'diary_goal_done';
-const toggles   = {};
-let foodEntries = [];
-let alcSocial   = '';
+const toggles       = {};
+let foodEntries     = [];
+let alcSocial       = '';
+let unlocked        = false;
 
 const PILL_NAMES = ['mood','energy','wellbeing','ex-feel','productivity','stress'];
 
-// ── PWA: keep page alive & auto-save on hide ──────────────────
+// Simple hash — not cryptographic, but enough to obscure from casual snooping
+async function hashPw(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw + 'diary_salt_2024'));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Lock screen logic ─────────────────────────────────────────
+function initLockScreen() {
+  const stored = localStorage.getItem(PW_KEY);
+  if (!stored) {
+    // First time — set password mode
+    document.getElementById('first-time-note').style.display = 'block';
+    document.getElementById('confirm-wrap').style.display = 'block';
+    document.getElementById('lock-btn').textContent = 'Set password & enter';
+    document.getElementById('lock-subtitle').textContent = 'Choose a password for your diary';
+    document.getElementById('lock-hint').textContent = '';
+    document.getElementById('change-pw-link').style.display = 'none';
+  } else {
+    document.getElementById('first-time-note').style.display = 'none';
+    document.getElementById('confirm-wrap').style.display = 'none';
+    document.getElementById('lock-btn').textContent = 'Unlock';
+    document.getElementById('lock-subtitle').textContent = 'Enter your password to continue';
+    document.getElementById('change-pw-link').style.display = 'inline-block';
+  }
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
+async function tryUnlock() {
+  const pw      = document.getElementById('pw-input').value;
+  const stored  = localStorage.getItem(PW_KEY);
+  const errEl   = document.getElementById('lock-error');
+  const input   = document.getElementById('pw-input');
+
+  if (!pw) { errEl.textContent = 'Please enter a password.'; return; }
+
+  if (!stored) {
+    // Setting password for first time
+    const confirm = document.getElementById('pw-confirm').value;
+    if (pw !== confirm) {
+      errEl.textContent = 'Passwords do not match.';
+      input.classList.add('shake');
+      setTimeout(() => input.classList.remove('shake'), 400);
+      return;
+    }
+    if (pw.length < 4) {
+      errEl.textContent = 'Password must be at least 4 characters.';
+      return;
+    }
+    const hash = await hashPw(pw);
+    localStorage.setItem(PW_KEY, hash);
+    unlock();
+  } else {
+    const hash  = await hashPw(pw);
+    if (hash === stored) {
+      unlock();
+    } else {
+      errEl.textContent = 'Incorrect password. Try again.';
+      input.value = '';
+      input.classList.add('shake');
+      setTimeout(() => input.classList.remove('shake'), 400);
+      input.focus();
+    }
+  }
+}
+
+function unlock() {
+  unlocked = true;
+  document.getElementById('lock-screen').style.display = 'none';
+  document.getElementById('diary-wrap').style.display  = 'block';
+  document.getElementById('lock-error').textContent    = '';
+  document.getElementById('pw-input').value            = '';
+  initDiary();
+}
+
+function lockDiary() {
+  silentSave();
+  unlocked = false;
+  document.getElementById('diary-wrap').style.display  = 'none';
+  document.getElementById('lock-screen').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('lock-error').textContent = '';
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
+function togglePwVisibility() {
+  const input = document.getElementById('pw-input');
+  input.type  = input.type === 'password' ? 'text' : 'password';
+}
+
+function showChangePw() {
+  document.getElementById('cp-current').value = '';
+  document.getElementById('cp-new').value     = '';
+  document.getElementById('cp-confirm').value = '';
+  document.getElementById('cp-error').textContent = '';
+  document.getElementById('change-pw-modal').style.display = 'flex';
+}
+
+async function doChangePassword() {
+  const current  = document.getElementById('cp-current').value;
+  const newPw    = document.getElementById('cp-new').value;
+  const confirm  = document.getElementById('cp-confirm').value;
+  const errEl    = document.getElementById('cp-error');
+  const stored   = localStorage.getItem(PW_KEY);
+
+  const currentHash = await hashPw(current);
+  if (currentHash !== stored) { errEl.textContent = 'Current password is incorrect.'; return; }
+  if (newPw.length < 4)       { errEl.textContent = 'New password must be at least 4 characters.'; return; }
+  if (newPw !== confirm)      { errEl.textContent = 'New passwords do not match.'; return; }
+
+  const newHash = await hashPw(newPw);
+  localStorage.setItem(PW_KEY, newHash);
+  closeModal('change-pw-modal');
+}
+
+// ── Auto-save on hide ─────────────────────────────────────────
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') silentSave();
+  if (document.visibilityState === 'hidden' && unlocked) silentSave();
 });
-window.addEventListener('pagehide', silentSave);
-window.addEventListener('beforeunload', silentSave);
+window.addEventListener('pagehide',      () => { if (unlocked) silentSave(); });
+window.addEventListener('beforeunload',  () => { if (unlocked) silentSave(); });
 
 function silentSave() {
   const data = getFormData();
@@ -422,17 +647,14 @@ function setAlcSocial(val) {
 // ── Food log ──────────────────────────────────────────────────
 function addFood() {
   const input = document.getElementById('food-input');
-  const val = input.value.trim();
+  const val   = input.value.trim();
   if (!val) return;
-  const time = new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  const time  = new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
   foodEntries.push({ text: val, time });
   input.value = '';
   renderFoodLog();
 }
-function removeFood(idx) {
-  foodEntries.splice(idx, 1);
-  renderFoodLog();
-}
+function removeFood(idx) { foodEntries.splice(idx, 1); renderFoodLog(); }
 function renderFoodLog() {
   const log = document.getElementById('food-log');
   if (!foodEntries.length) { log.innerHTML = '<div class="food-empty">Nothing logged yet.</div>'; return; }
@@ -456,37 +678,26 @@ function loadYesterdayGoal() {
   }
 }
 
-// ── New day logic ─────────────────────────────────────────────
 function fmt(d) {
   return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 }
-function promptNewDay() { document.getElementById('new-day-modal').style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function promptNewDay()  { document.getElementById('new-day-modal').style.display = 'flex'; }
+function closeModal(id)  { document.getElementById(id).style.display = 'none'; }
 
 function confirmNewDay() {
   closeModal('new-day-modal'); closeModal('open-modal');
-
-  const nextGoal   = document.getElementById('next-goal').value.trim();
-  const goalDone   = toggles['goal-done']; // true = yes, false = no, undefined = unanswered
-
-  // Carry forward if goal was NOT done (false) or unanswered (undefined/null)
-  // and there was a goal set
-  const prevGoal = localStorage.getItem(GOAL_KEY);
+  const nextGoal  = document.getElementById('next-goal').value.trim();
+  const goalDone  = toggles['goal-done'];
+  const prevGoal  = localStorage.getItem(GOAL_KEY);
   const shouldCarry = prevGoal && goalDone !== true;
-
-  // What becomes tomorrow's goal on new day:
-  // Priority: what user typed in next-goal field, else carry over unfinished goal
   const goalToCarry = nextGoal || (shouldCarry ? prevGoal : '');
-
   if (goalToCarry) {
     localStorage.setItem(GOAL_KEY, goalToCarry);
-    // Mark whether it was carried (no next-goal typed, just rolling over)
     localStorage.setItem(GOAL_DONE_KEY, shouldCarry && !nextGoal ? 'carried' : 'new');
   } else {
     localStorage.removeItem(GOAL_KEY);
     localStorage.removeItem(GOAL_DONE_KEY);
   }
-
   resetForm();
   localStorage.setItem(STATE_KEY, JSON.stringify({ date: new Date().toDateString() }));
   document.getElementById('date-display').textContent = fmt(new Date());
@@ -495,27 +706,12 @@ function confirmNewDay() {
 }
 
 function updateCarriedTag() {
-  // Show "Carried over" tag on tomorrow's goal if the stored goal was carried
   const tag    = document.getElementById('carried-tag');
   const status = localStorage.getItem(GOAL_DONE_KEY);
   const goal   = localStorage.getItem(GOAL_KEY);
-  // We show the tag in next-goal field only when a carried goal is pre-filled
-  // but only right after a new day starts — once user edits it, tag stays for context
-  if (goal && status === 'carried') {
-    tag.style.display = 'inline-block';
-  } else {
-    tag.style.display = 'none';
-  }
+  tag.style.display = (goal && status === 'carried') ? 'inline-block' : 'none';
 }
 
-function preloadCarriedGoal() {
-  // On a fresh day start, if a goal was carried, pre-fill tomorrow's goal field
-  // Actually we don't pre-fill next-goal — the carried goal shows in "yesterday's goal"
-  // The tag shows on the next-goal section so user knows to re-enter if they want
-  updateCarriedTag();
-}
-
-// ── Reset ─────────────────────────────────────────────────────
 function resetForm() {
   PILL_NAMES.forEach(name => {
     const checked = document.querySelector(`input[name="${name}"]:checked`);
@@ -527,7 +723,7 @@ function resetForm() {
     if (el) el.value = '';
   });
   foodEntries = []; renderFoodLog();
-  alcSocial = '';
+  alcSocial   = '';
   ['exercise','vitamins','alcohol','tasks','goal-done'].forEach(name => {
     toggles[name] = undefined;
     const yes = document.getElementById(name + '-yes');
@@ -542,7 +738,6 @@ function resetForm() {
   document.getElementById('save-status').textContent  = '';
 }
 
-// ── Collect data ──────────────────────────────────────────────
 function getFormData() {
   return {
     date:             new Date().toLocaleDateString('en-GB'),
@@ -575,7 +770,6 @@ function getFormData() {
   };
 }
 
-// ── Save to sheet ─────────────────────────────────────────────
 async function saveEntry() {
   const url = localStorage.getItem(SHEET_KEY);
   if (!url) { document.getElementById('sheet-modal').style.display = 'flex'; return; }
@@ -597,7 +791,6 @@ function saveSheetUrl() {
   if (val) { localStorage.setItem(SHEET_KEY, val); closeModal('sheet-modal'); saveEntry(); }
 }
 
-// ── Restore state ─────────────────────────────────────────────
 function restoreState(s) {
   PILL_NAMES.forEach(name => { if (s[name]) setPill(name, s[name]); });
   const fieldMap = {
@@ -621,18 +814,16 @@ function restoreState(s) {
   if (s.tasks_notes) document.getElementById('tasks-done').value = s.tasks_notes;
 }
 
-// ── Init ──────────────────────────────────────────────────────
-function init() {
+function initDiary() {
   buildPills();
   renderFoodLog();
   document.getElementById('date-display').textContent = fmt(new Date());
   loadYesterdayGoal();
-  preloadCarriedGoal();
-
+  updateCarriedTag();
   const saved = localStorage.getItem(STATE_KEY);
   if (!saved) return;
   try {
-    const s = JSON.parse(saved);
+    const s   = JSON.parse(saved);
     const now = new Date();
     if (s.date && s.date !== now.toDateString()) {
       document.getElementById('open-modal-msg').textContent =
@@ -645,7 +836,9 @@ function init() {
     }
   } catch(e) {}
 }
-init();
+
+// ── Start ─────────────────────────────────────────────────────
+initLockScreen();
 </script>
 </body>
 </html>
