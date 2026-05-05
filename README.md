@@ -1,0 +1,2 @@
+# HJVStatDiary.ee
+Statistical Diary
